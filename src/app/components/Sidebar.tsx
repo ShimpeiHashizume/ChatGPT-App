@@ -3,6 +3,7 @@ import { Timestamp, collection, onSnapshot, orderBy, query, where } from "fireba
 import React, { useEffect, useState } from "react";
 import { BiLogOut } from "react-icons/bi";
 import { db } from "../../../firebase";
+import { useAppContext } from "@/context/AppContext";
 
 type Room = {
   id: string;
@@ -11,12 +12,14 @@ type Room = {
 };
 
 const Sidebar = () => {
+  const { user, userId, setSelectedRoom } = useAppContext();
+
   const [rooms, setRooms] = useState<Room[]>([]);
 
   useEffect(() => {
     const fetchRooms = async () => {
       const roomCollectionRef = collection(db, "rooms");
-      const q = query(roomCollectionRef, where("userId", "==", "jnrXzvgbUKdDO6YCxzcklsZRCJ13"), orderBy("createdAt"));
+      const q = query(roomCollectionRef, where("userId", "==", userId), orderBy("createdAt"));
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const newRooms: Room[] = snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -25,9 +28,16 @@ const Sidebar = () => {
         }));
         setRooms(newRooms);
       });
+      return () => {
+        unsubscribe();
+      };
     };
     fetchRooms();
-  }, []);
+  }, [userId]);
+
+  const selectRoom = (roomId: string) => {
+    setSelectedRoom(roomId);
+  };
 
   return (
     <div className="bg-custom-blue h-full overflow-y-auto px-5 flex flex-col">
@@ -38,7 +48,7 @@ const Sidebar = () => {
         </div>
         <ul>
           {rooms.map((room) => (
-            <li key={room.id} className="cursor-pointer border-b p-4 text-slate-100 hover:bg-slate-700 duration-150">
+            <li key={room.id} className="cursor-pointer border-b p-4 text-slate-100 hover:bg-slate-700 duration-150" onClick={() => selectRoom(room.id)}>
               {room.name}
             </li>
           ))}
