@@ -4,6 +4,7 @@ import { FaPaperPlane } from "react-icons/fa";
 import { db } from "../../../firebase";
 import { Timestamp, addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
+import OpenAI from "openai";
 
 type Message = {
   text: string;
@@ -12,6 +13,14 @@ type Message = {
 };
 
 const Chat = () => {
+
+  const openai = new OpenAI({
+    apiKey: process.env.NEXT_PUBLIC_OPENAI_KEY,
+    dangerouslyAllowBrowser: true,
+  });
+  console.log(openai);
+  
+
   const { selectedRoom } = useAppContext();
   const [inputMessage, setInputMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -50,6 +59,14 @@ const Chat = () => {
     const roomDocRef = doc(db, "rooms", "dOnGthbMdZEmNA2G1diP");
     const messageCollectionRef = collection(roomDocRef, "messages");
     await addDoc(messageCollectionRef, messageData);
+
+    // OpenAIからの返信
+    // const gpt3Response = await openai.chat.completions.create({
+    //   messages: [{role: "user", content: inputMessage}],
+    //   model: "gpt-3.5-turbo",
+    // });
+    // console.log(gpt3Response);
+    
   };
 
   return (
