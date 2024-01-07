@@ -14,6 +14,8 @@ type AppContextType = {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   selectedRoom: string | null;
   setSelectedRoom: React.Dispatch<React.SetStateAction<string | null>>;
+  selectRoomName: string | null;
+  setSelectRoomName: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const defaultContextData = {
@@ -22,6 +24,8 @@ const defaultContextData = {
   setUser: () => {},
   selectedRoom: null,
   setSelectedRoom: () => {},
+  selectRoomName: null,
+  setSelectRoomName: () => {},
 };
 
 const AppContext = createContext<AppContextType>(defaultContextData);
@@ -30,6 +34,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [selectRoomName, setSelectRoomName] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (newUser) => {
@@ -42,7 +47,7 @@ export function AppProvider({ children }: AppProviderProps) {
     };
   }, []);
 
-  return <AppContext.Provider value={{ user, userId, setUser, selectedRoom, setSelectedRoom }}>{children}</AppContext.Provider>;
+  return <AppContext.Provider value={{ user, userId, setUser, selectedRoom, setSelectedRoom, selectRoomName, setSelectRoomName }}>{children}</AppContext.Provider>;
 }
 
 export function useAppContext() {
