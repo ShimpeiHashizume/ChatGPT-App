@@ -5,6 +5,7 @@ import { db } from "../../../firebase";
 import { Timestamp, addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { useAppContext } from "@/context/AppContext";
 import OpenAI from "openai";
+import LoadingIcons from 'react-loading-icons'
 
 type Message = {
   text: string;
@@ -18,12 +19,11 @@ const Chat = () => {
     apiKey: process.env.NEXT_PUBLIC_OPENAI_KEY,
     dangerouslyAllowBrowser: true,
   });
-  console.log(openai);
-  
 
   const { selectedRoom } = useAppContext();
   const [inputMessage, setInputMessage] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 各Roomにおけるメッセージを取得
   useEffect(() => {
@@ -56,18 +56,32 @@ const Chat = () => {
     };
 
     // メッセージをFirestoreに保存
-    const roomDocRef = doc(db, "rooms", "dOnGthbMdZEmNA2G1diP");
+    const roomDocRef = doc(db, "rooms", selectedRoom!);
     const messageCollectionRef = collection(roomDocRef, "messages");
     await addDoc(messageCollectionRef, messageData);
+    
+    setInputMessage("");
+    setIsLoading(true);
 
     // OpenAIからの返信
-    // const gpt3Response = await openai.chat.completions.create({
-    //   messages: [{role: "user", content: inputMessage}],
-    //   model: "gpt-3.5-turbo",
-    // });
-    // console.log(gpt3Response);
-    
+    const gpt3Response = await openai.chat.completions.create({
+      messages: [{role: "user", content: inputMessage}],
+      model: "gpt-3.5-turbo",
+    });
+
+    setIsLoading(false);
+
+    const botResponse = gpt3Response.choices[0].message.content;
+    await addDoc(messageCollectionRef, {
+      text: botResponse,
+      sender: "bot",
+      createdAt: serverTimestamp(),
+    });
   };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+  }
 
   return (
     <div className="bg-gray-500 h-full p-4 flex flex-col">
@@ -80,12 +94,15 @@ const Chat = () => {
             </div>
           </div>
         ))}
+        {isLoading && <LoadingIcons.TailSpin />}
       </div>
       <div className="flex-shrink-0 relative">
-        <input type="text" placeholder="Send a Message" className="border-2 rounded w-full pr-10 focus:outline-none p-2" onChange={(e) => setInputMessage(e.target.value)} />
-        <button className="absolute inset-y-0 right-4 flex items-center" onClick={() => sendMessage()}>
-          <FaPaperPlane />
-        </button>
+        <form onSubmit={handleSubmit}>
+          <input type="text" placeholder="Send a Message" className="border-2 rounded w-full pr-10 focus:outline-none p-2" onChange={(e) => setInputMessage(e.target.value)} value={inputMessage} />
+          <button className="absolute inset-y-0 right-4 flex items-center" onClick={() => sendMessage()}>
+            <FaPaperPlane />
+          </button>
+        </form>
       </div>
     </div>
   );
