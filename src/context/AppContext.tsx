@@ -3,6 +3,7 @@
 import { User, onAuthStateChanged } from "firebase/auth";
 import { ReactNode, createContext, useContext, useEffect, useState } from "react";
 import { auth } from "../../firebase";
+import { useRouter } from "next/navigation";
 
 type AppProviderProps = {
   children: ReactNode;
@@ -35,11 +36,16 @@ export function AppProvider({ children }: AppProviderProps) {
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectRoomName, setSelectRoomName] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (newUser) => {
       setUser(newUser);
       setUserId(newUser ? newUser.uid : null);
+
+      if (!newUser) {
+        router.push("/auth/login");
+      }
     });
 
     return () => {
